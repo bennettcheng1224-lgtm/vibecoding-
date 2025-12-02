@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRT 雙語字幕翻譯器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragging {
+            border-color: #764ba2;
+            background: #e8ebff;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-info {
+            margin-top: 15px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .options {
+            margin: 20px 0;
+        }
+
+        .option-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-container.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .status-message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .status-message.info {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-message.success {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .status-message.error {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        .download-area {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+        }
+
+        .download-area.show {
+            display: block;
+        }
+
+        .preview {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            display: none;
+        }
+
+        .preview.show {
+            display: block;
+        }
+
+        .api-key-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff3e0;
+            border-radius: 10px;
+            border: 2px solid #ffb74d;
+        }
+
+        .api-key-section input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-top: 5px;
+        }
+
+        .api-key-section small {
+            color: #666;
+            display: block;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SRT 雙語字幕翻譯器</h1>
+        <p class="subtitle">上傳 SRT 字幕檔，自動翻譯成繁體中文+英文雙語字幕</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <p style="font-size: 1.2em; margin-bottom: 5px;">點擊或拖曳 SRT 檔案到這裡</p>
+            <p style="color: #999;">支援 .srt 格式字幕檔</p>
+            <input type="file" id="fileInput" accept=".srt">
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <strong>已選擇檔案：</strong> <span id="fileName"></span>
+        </div>
+
+        <div class="options">
+            <div class="option-group">
+                <label for="sourceLanguage">原始字幕語言：</label>
+                <select id="sourceLanguage">
+                    <option value="zh-CN">簡體中文</option>
+                    <option value="en">英文</option>
+                </select>
+            </div>
+
+            <div class="option-group">
+                <label for="translationService">翻譯服務：</label>
+                <select id="translationService">
+                    <option value="mymemory">MyMemory (免費，無需 API key)</option>
+                    <option value="chatgpt">ChatGPT (需要 OpenAI API key，推薦)</option>
+                    <option value="google">Google Translate (需要 API key)</option>
+                </select>
+            </div>
+
+            <div class="api-key-section" id="apiKeySection" style="display: none;">
+                <label for="apiKey" id="apiKeyLabel">API Key：</label>
+                <input type="text" id="apiKey" placeholder="輸入你的 API key">
+                <small id="apiKeyHint"></small>
+            </div>
+
+            <div class="option-group">
+                <label for="outputFormat">輸出格式：</label>
+                <select id="outputFormat">
+                    <option value="both">雙語（繁體中文 + 英文）</option>
+                    <option value="chinese-only">僅繁體中文</option>
+                    <option value="english-only">僅英文</option>
+                    <option value="separate">分別保存英文和中文</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn" id="translateBtn" disabled>開始翻譯</button>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+            <div class="status-message info" id="statusMessage"></div>
+        </div>
+
+        <div class="download-area" id="downloadArea">
+            <h3 style="margin-bottom: 10px;">翻譯完成！</h3>
+            <button class="btn" id="downloadBtn">下載雙語字幕</button>
+            <button class="btn" id="downloadEnBtn" style="display: none;">下載英文字幕</button>
+            <button class="btn" id="downloadZhBtn" style="display: none;">下載中文字幕</button>
+        </div>
+
+        <div class="preview" id="preview"></div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const translateBtn = document.getElementById('translateBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const statusMessage = document.getElementById('statusMessage');
+        const downloadArea = document.getElementById('downloadArea');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const downloadEnBtn = document.getElementById('downloadEnBtn');
+        const downloadZhBtn = document.getElementById('downloadZhBtn');
+        const preview = document.getElementById('preview');
+        const sourceLanguage = document.getElementById('sourceLanguage');
+        const translationService = document.getElementById('translationService');
+        const apiKeySection = document.getElementById('apiKeySection');
+        const apiKey = document.getElementById('apiKey');
+        const outputFormat = document.getElementById('outputFormat');
+
+        let selectedFile = null;
+        let translatedContent = null;
+        let englishContent = null;
+        let chineseContent = null;
+
+        // Translation service selection
+        translationService.addEventListener('change', () => {
+            const service = translationService.value;
+            const apiKeyLabel = document.getElementById('apiKeyLabel');
+            const apiKeyHint = document.getElementById('apiKeyHint');
+
+            if (service === 'google') {
+                apiKeySection.style.display = 'block';
+                apiKeyLabel.textContent = 'Google Translate API Key：';
+                apiKeyHint.innerHTML = '前往 <a href="https://cloud.google.com/translate" target="_blank">Google Cloud</a> 取得 API key';
+            } else if (service === 'chatgpt') {
+                apiKeySection.style.display = 'block';
+                apiKeyLabel.textContent = 'OpenAI API Key：';
+                apiKeyHint.innerHTML = '前往 <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a> 取得 API key';
+            } else {
+                apiKeySection.style.display = 'none';
+            }
+        });
+
+        // Upload area interactions
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragging');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragging');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragging');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].name.endsWith('.srt')) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileInfo.classList.add('show');
+            translateBtn.disabled = false;
+        }
+
+        // Parse SRT file
+        function parseSRT(content) {
+            const subtitles = [];
+            const blocks = content.trim().split(/\n\s*\n/);
+
+            for (const block of blocks) {
+                const lines = block.trim().split('\n');
+                if (lines.length >= 3) {
+                    const index = lines[0].trim();
+                    const time = lines[1].trim();
+                    const text = lines.slice(2).join('\n').trim();
+
+                    subtitles.push({ index, time, text });
+                }
+            }
+
+            return subtitles;
+        }
+
+        // Generate SRT content
+        function generateSRT(subtitles) {
+            return subtitles.map(sub =>
+                `${sub.index}\n${sub.time}\n${sub.text}\n`
+            ).join('\n');
+        }
+
+        // Translate text using MyMemory API
+        async function translateWithMyMemory(text, sourceLang, targetLang) {
+            // Map language codes for MyMemory API
+            let langPair;
+            if (sourceLang === 'zh-CN' && targetLang === 'en') {
+                langPair = 'zh-CN|en';
+            } else if (sourceLang === 'zh-CN' && targetLang === 'zh-TW') {
+                langPair = 'zh-CN|zh-TW';
+            } else if (sourceLang === 'en' && targetLang === 'zh-TW') {
+                langPair = 'en|zh-TW';
+            } else {
+                langPair = 'en|zh-TW'; // default
+            }
+
+            const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langPair}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.responseStatus === 200) {
+                    return data.responseData.translatedText;
+                } else {
+                    throw new Error('Translation failed');
+                }
+            } catch (error) {
+                console.error('Translation error:', error);
+                return text; // Return original text if translation fails
+            }
+        }
+
+        // Translate text using Google Translate API
+        async function translateWithGoogle(text, apiKeyValue, sourceLang, targetLang) {
+            const url = `https://translation.googleapis.com/language/translate/v2?key=${apiKeyValue}`;
+
+            // Map language codes for Google Translate
+            let source = sourceLang === 'zh-CN' ? 'zh-CN' : 'en';
+            let target = targetLang === 'en' ? 'en' : 'zh-TW';
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        q: text,
+                        source: source,
+                        target: target,
+                        format: 'text'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.data && data.data.translations && data.data.translations.length > 0) {
+                    return data.data.translations[0].translatedText;
+                } else {
+                    throw new Error('Translation failed');
+                }
+            } catch (error) {
+                console.error('Translation error:', error);
+                throw error;
+            }
+        }
+
+        // Translate text using OpenAI ChatGPT API
+        async function translateWithChatGPT(text, apiKeyValue, sourceLang, targetLang) {
+            const url = 'https://api.openai.com/v1/chat/completions';
+
+            let systemPrompt, userPrompt;
+
+            if (sourceLang === 'zh-CN' && targetLang === 'en') {
+                systemPrompt = '你是一個專業的字幕翻譯員。請將中文字幕翻譯成自然流暢的英文，保持原意和語氣。';
+                userPrompt = `請將以下中文字幕翻譯成英文：\n\n${text}`;
+            } else if (sourceLang === 'zh-CN' && targetLang === 'zh-TW') {
+                systemPrompt = '你是一個專業的字幕翻譯員。請將簡體中文轉換成繁體中文，保持原意。';
+                userPrompt = `請將以下簡體中文轉換成繁體中文：\n\n${text}`;
+            } else if (sourceLang === 'en' && targetLang === 'zh-TW') {
+                systemPrompt = '你是一個專業的字幕翻譯員。請將英文字幕翻譯成自然流暢的繁體中文，保持原意和語氣。';
+                userPrompt = `請將以下英文字幕翻譯成繁體中文：\n\n${text}`;
+            } else {
+                systemPrompt = '你是一個專業的翻譯員。';
+                userPrompt = `請翻譯以下文字：\n\n${text}`;
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKeyValue}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-3.5-turbo',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: systemPrompt
+                            },
+                            {
+                                role: 'user',
+                                content: userPrompt
+                            }
+                        ],
+                        temperature: 0.3,
+                        max_tokens: 500
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.choices && data.choices.length > 0) {
+                    return data.choices[0].message.content.trim();
+                } else if (data.error) {
+                    throw new Error(data.error.message || 'Translation failed');
+                } else {
+                    throw new Error('Translation failed');
+                }
+            } catch (error) {
+                console.error('Translation error:', error);
+                throw error;
+            }
+        }
+
+        // Translate subtitle based on source and target language
+        async function translateText(text, service, apiKeyValue, sourceLang, targetLang) {
+            let translatedText;
+
+            if (service === 'chatgpt') {
+                translatedText = await translateWithChatGPT(text, apiKeyValue, sourceLang, targetLang);
+            } else if (service === 'google') {
+                translatedText = await translateWithGoogle(text, apiKeyValue, sourceLang, targetLang);
+            } else {
+                translatedText = await translateWithMyMemory(text, sourceLang, targetLang);
+            }
+
+            return translatedText;
+        }
+
+        // Main translation function
+        translateBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            const service = translationService.value;
+            const apiKeyValue = apiKey.value;
+
+            if ((service === 'google' || service === 'chatgpt') && !apiKeyValue) {
+                alert('請輸入 API Key');
+                return;
+            }
+
+            translateBtn.disabled = true;
+            progressContainer.classList.add('show');
+            downloadArea.classList.remove('show');
+            preview.classList.remove('show');
+
+            try {
+                // Read file
+                const content = await selectedFile.text();
+                const subtitles = parseSRT(content);
+
+                if (subtitles.length === 0) {
+                    throw new Error('無法解析 SRT 檔案');
+                }
+
+                const sourceLang = sourceLanguage.value;
+                statusMessage.textContent = `正在翻譯 ${subtitles.length} 條字幕...`;
+                statusMessage.className = 'status-message info';
+
+                const translatedSubtitles = [];
+                const chineseSubtitles = [];
+                const englishSubtitles = [];
+
+                // Translate each subtitle with progress
+                for (let i = 0; i < subtitles.length; i++) {
+                    const subtitle = subtitles[i];
+                    const progress = Math.round(((i + 1) / subtitles.length) * 100);
+
+                    progressFill.style.width = `${progress}%`;
+                    progressFill.textContent = `${progress}%`;
+
+                    let chineseText, englishText;
+
+                    if (sourceLang === 'zh-CN') {
+                        // Source is Simplified Chinese
+                        // 1. Convert to Traditional Chinese
+                        chineseText = await translateText(subtitle.text, service, apiKeyValue, 'zh-CN', 'zh-TW');
+                        // 2. Translate to English
+                        englishText = await translateText(subtitle.text, service, apiKeyValue, 'zh-CN', 'en');
+                    } else {
+                        // Source is English
+                        englishText = subtitle.text;
+                        // Translate to Traditional Chinese
+                        chineseText = await translateText(subtitle.text, service, apiKeyValue, 'en', 'zh-TW');
+                    }
+
+                    // Create output based on format
+                    const format = outputFormat.value;
+                    let outputText;
+
+                    if (format === 'chinese-only') {
+                        outputText = chineseText;
+                    } else if (format === 'english-only') {
+                        outputText = englishText;
+                    } else if (format === 'separate') {
+                        // For separate files, use Chinese as main
+                        outputText = chineseText;
+                    } else {
+                        // For 'both' format, combine Chinese and English (Chinese first)
+                        outputText = `${chineseText}\n${englishText}`;
+                    }
+
+                    translatedSubtitles.push({
+                        index: subtitle.index,
+                        time: subtitle.time,
+                        text: outputText
+                    });
+
+                    chineseSubtitles.push({
+                        index: subtitle.index,
+                        time: subtitle.time,
+                        text: chineseText
+                    });
+
+                    englishSubtitles.push({
+                        index: subtitle.index,
+                        time: subtitle.time,
+                        text: englishText
+                    });
+
+                    // Add delay to avoid rate limiting
+                    if (service === 'mymemory') {
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    } else if (service === 'chatgpt') {
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                    }
+                }
+
+                // Generate SRT content
+                translatedContent = generateSRT(translatedSubtitles);
+                englishContent = generateSRT(englishSubtitles);
+                chineseContent = generateSRT(chineseSubtitles);
+
+                // Show success message
+                statusMessage.textContent = '翻譯完成！';
+                statusMessage.className = 'status-message success';
+
+                // Show download buttons
+                downloadArea.classList.add('show');
+
+                if (outputFormat.value === 'separate') {
+                    downloadBtn.style.display = 'none';
+                    downloadEnBtn.style.display = 'block';
+                    downloadZhBtn.style.display = 'block';
+                } else {
+                    downloadBtn.style.display = 'block';
+                    downloadEnBtn.style.display = 'none';
+                    downloadZhBtn.style.display = 'none';
+                }
+
+                // Show preview
+                const previewText = translatedContent.split('\n').slice(0, 20).join('\n');
+                preview.textContent = previewText + '\n\n...';
+                preview.classList.add('show');
+
+            } catch (error) {
+                console.error('Error:', error);
+                statusMessage.textContent = `錯誤：${error.message}`;
+                statusMessage.className = 'status-message error';
+            } finally {
+                translateBtn.disabled = false;
+            }
+        });
+
+        // Download bilingual subtitle
+        downloadBtn.addEventListener('click', () => {
+            downloadFile(translatedContent, selectedFile.name.replace('.srt', '_bilingual.srt'));
+        });
+
+        // Download English subtitle
+        downloadEnBtn.addEventListener('click', () => {
+            downloadFile(englishContent, selectedFile.name.replace('.srt', '_english.srt'));
+        });
+
+        // Download Chinese subtitle
+        downloadZhBtn.addEventListener('click', () => {
+            downloadFile(chineseContent, selectedFile.name.replace('.srt', '_chinese.srt'));
+        });
+
+        function downloadFile(content, filename) {
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
