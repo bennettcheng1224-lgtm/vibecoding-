@@ -139,11 +139,45 @@
                 opacity: 0;
             }
         }
+
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            padding: 10px 25px;
+            font-size: 1em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .mode-btn:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+
+        .mode-btn.active {
+            background: #000;
+            color: white;
+            border-color: #000;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>井字遊戲</h1>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" id="modeAI">人機對戰</button>
+            <button class="mode-btn" id="mode2P">雙人對戰</button>
+        </div>
 
         <div class="score-board">
             <div class="score-item">
@@ -153,7 +187,7 @@
                 平手: <span id="scoreDraw">0</span>
             </div>
             <div class="score-item">
-                玩家 O: <span id="scoreO">0</span>
+                <span id="playerOLabel">電腦 O</span>: <span id="scoreO">0</span>
             </div>
         </div>
 
@@ -181,11 +215,15 @@
         const scoreXEl = document.getElementById('scoreX');
         const scoreOEl = document.getElementById('scoreO');
         const scoreDrawEl = document.getElementById('scoreDraw');
+        const playerOLabel = document.getElementById('playerOLabel');
+        const modeAIBtn = document.getElementById('modeAI');
+        const mode2PBtn = document.getElementById('mode2P');
 
         let currentPlayer = 'X';
         let gameActive = true;
         let gameState = ['', '', '', '', '', '', '', '', ''];
         let scores = { X: 0, O: 0, draw: 0 };
+        let isAIMode = true;
 
         const winningConditions = [
             [0, 1, 2],
@@ -197,6 +235,72 @@
             [0, 4, 8],
             [2, 4, 6]
         ];
+
+        function getAIMove() {
+            // 30% 機率隨機移動（讓電腦不會太強）
+            if (Math.random() < 0.3) {
+                return getRandomMove();
+            }
+
+            // 嘗試獲勝
+            const winMove = findWinningMove('O');
+            if (winMove !== -1) return winMove;
+
+            // 阻擋玩家獲勝
+            const blockMove = findWinningMove('X');
+            if (blockMove !== -1) return blockMove;
+
+            // 優先選擇中心
+            if (gameState[4] === '') return 4;
+
+            // 選擇角落
+            const corners = [0, 2, 6, 8];
+            const availableCorners = corners.filter(i => gameState[i] === '');
+            if (availableCorners.length > 0) {
+                return availableCorners[Math.floor(Math.random() * availableCorners.length)];
+            }
+
+            // 其他情況隨機選擇
+            return getRandomMove();
+        }
+
+        function findWinningMove(player) {
+            for (let condition of winningConditions) {
+                const [a, b, c] = condition;
+                const cells = [gameState[a], gameState[b], gameState[c]];
+
+                if (cells.filter(cell => cell === player).length === 2 &&
+                    cells.filter(cell => cell === '').length === 1) {
+                    if (gameState[a] === '') return a;
+                    if (gameState[b] === '') return b;
+                    if (gameState[c] === '') return c;
+                }
+            }
+            return -1;
+        }
+
+        function getRandomMove() {
+            const availableCells = gameState
+                .map((cell, index) => cell === '' ? index : null)
+                .filter(index => index !== null);
+            return availableCells[Math.floor(Math.random() * availableCells.length)];
+        }
+
+        function makeAIMove() {
+            if (!gameActive || currentPlayer !== 'O' || !isAIMode) return;
+
+            setTimeout(() => {
+                const moveIndex = getAIMove();
+                const cell = document.querySelector(`[data-index="${moveIndex}"]`);
+
+                gameState[moveIndex] = 'O';
+                cell.textContent = 'O';
+                cell.classList.add('o');
+                cell.disabled = true;
+
+                checkResult();
+            }, 500);
+        }
 
         function handleCellClick(e) {
             const clickedCell = e.target;
@@ -231,7 +335,11 @@
             }
 
             if (roundWon) {
-                gameInfo.textContent = `玩家 ${currentPlayer} 獲勝！`;
+                if (isAIMode && currentPlayer === 'O') {
+                    gameInfo.textContent = '電腦獲勝！';
+                } else {
+                    gameInfo.textContent = `玩家 ${currentPlayer} 獲勝！`;
+                }
                 gameActive = false;
                 scores[currentPlayer]++;
                 updateScores();
@@ -250,7 +358,13 @@
             }
 
             currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-            gameInfo.textContent = `玩家 ${currentPlayer} 的回合`;
+
+            if (isAIMode && currentPlayer === 'O') {
+                gameInfo.textContent = '電腦思考中...';
+                makeAIMove();
+            } else {
+                gameInfo.textContent = `玩家 ${currentPlayer} 的回合`;
+            }
         }
 
         function highlightWinningCells(cells) {
@@ -293,8 +407,26 @@
             });
         }
 
+        function switchMode(mode) {
+            isAIMode = mode === 'ai';
+
+            if (isAIMode) {
+                modeAIBtn.classList.add('active');
+                mode2PBtn.classList.remove('active');
+                playerOLabel.textContent = '電腦 O';
+            } else {
+                modeAIBtn.classList.remove('active');
+                mode2PBtn.classList.add('active');
+                playerOLabel.textContent = '玩家 O';
+            }
+
+            resetGame();
+        }
+
         cells.forEach(cell => cell.addEventListener('click', handleCellClick));
         resetBtn.addEventListener('click', resetGame);
+        modeAIBtn.addEventListener('click', () => switchMode('ai'));
+        mode2PBtn.addEventListener('click', () => switchMode('2p'));
     </script>
 </body>
 </html>
