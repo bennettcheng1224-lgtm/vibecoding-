@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatGPT Prompt 快捷庫</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 450px;
+      min-height: 550px;
+      background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+      color: #e0e0e0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #4a4a6a;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      color: #ffffff;
+      margin-bottom: 5px;
+    }
+
+    .header p {
+      font-size: 12px;
+      color: #a0a0c0;
+    }
+
+    /* 新增提示詞區塊 */
+    .add-section {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .add-section h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #a0d0ff;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      color: #a0a0c0;
+      margin-bottom: 5px;
+    }
+
+    #newPromptTitle,
+    #newPromptCategory,
+    #newPromptContent {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #4a4a6a;
+      border-radius: 6px;
+      background: #2a2a3e;
+      color: #e0e0e0;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    #newPromptTitle:focus,
+    #newPromptCategory:focus,
+    #newPromptContent:focus {
+      outline: none;
+      border-color: #6b9aff;
+      box-shadow: 0 0 0 2px rgba(107, 154, 255, 0.2);
+    }
+
+    #newPromptContent {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    #categoryDatalist option {
+      background: #2a2a3e;
+      color: #e0e0e0;
+    }
+
+    #addPromptBtn {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, #6b9aff 0%, #5580e8 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+
+    #addPromptBtn:hover {
+      background: linear-gradient(135deg, #5580e8 0%, #4470d8 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(107, 154, 255, 0.3);
+    }
+
+    #addPromptBtn:active {
+      transform: translateY(0);
+    }
+
+    /* 提示詞列表 */
+    .prompts-section {
+      margin-bottom: 20px;
+    }
+
+    .prompts-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .prompts-section-header h3 {
+      font-size: 14px;
+      color: #a0d0ff;
+      margin: 0;
+    }
+
+    /* 搜尋和篩選 */
+    .filter-section {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: flex;
+      gap: 8px;
+    }
+
+    #searchInput,
+    #categoryFilter {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #4a4a6a;
+      border-radius: 5px;
+      background: #2a2a3e;
+      color: #e0e0e0;
+      font-size: 12px;
+    }
+
+    #searchInput::placeholder {
+      color: #666;
+    }
+
+    #searchInput:focus,
+    #categoryFilter:focus {
+      outline: none;
+      border-color: #6b9aff;
+    }
+
+    #promptList {
+      max-height: 280px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    #promptList::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #promptList::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
+    }
+
+    #promptList::-webkit-scrollbar-thumb {
+      background: #4a4a6a;
+      border-radius: 3px;
+    }
+
+    #promptList::-webkit-scrollbar-thumb:hover {
+      background: #5a5a7a;
+    }
+
+    /* 分類群組 */
+    .category-group {
+      margin-bottom: 15px;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding: 5px 10px;
+      background: rgba(107, 154, 255, 0.1);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .category-header:hover {
+      background: rgba(107, 154, 255, 0.15);
+    }
+
+    .category-name {
+      font-size: 13px;
+      font-weight: bold;
+      color: #6b9aff;
+      flex: 1;
+    }
+
+    .category-count {
+      font-size: 11px;
+      color: #888;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .category-toggle {
+      font-size: 12px;
+      color: #888;
+      transition: transform 0.2s;
+    }
+
+    .category-toggle.collapsed {
+      transform: rotate(-90deg);
+    }
+
+    .category-items {
+      margin-left: 10px;
+    }
+
+    .category-items.collapsed {
+      display: none;
+    }
+
+    /* 提示詞項目 */
+    .prompt-item {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.2s;
+    }
+
+    .prompt-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: #6b9aff;
+      transform: translateX(3px);
+    }
+
+    .prompt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 5px;
+    }
+
+    .prompt-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #ffffff;
+      cursor: pointer;
+      flex: 1;
+      margin-right: 10px;
+    }
+
+    .prompt-content {
+      font-size: 12px;
+      color: #a0a0c0;
+      line-height: 1.4;
+      cursor: pointer;
+      word-break: break-word;
+      margin-top: 5px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .prompt-content.expanded {
+      -webkit-line-clamp: unset;
+    }
+
+    .prompt-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .prompt-category-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      background: rgba(107, 154, 255, 0.2);
+      color: #6b9aff;
+      border-radius: 10px;
+    }
+
+    .delete-btn {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .delete-btn:hover {
+      background: #c0392b;
+      transform: scale(1.05);
+    }
+
+    .empty-message {
+      text-align: center;
+      color: #888;
+      padding: 30px;
+      font-size: 13px;
+    }
+
+    /* 匯出匯入區塊 */
+    .import-export-section {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .import-export-section h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #a0d0ff;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .export-btn, .import-btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+
+    .export-btn {
+      background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+      color: white;
+    }
+
+    .export-btn:hover {
+      background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+      transform: translateY(-1px);
+    }
+
+    .import-btn {
+      background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+      color: white;
+    }
+
+    .import-btn:hover {
+      background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+      transform: translateY(-1px);
+    }
+
+    #importFileInput {
+      display: none;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 15px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 11px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <!-- 標題區 -->
+  <div class="header">
+    <h1>🧠 ChatGPT Prompt 快捷庫</h1>
+    <p>快速管理你的提示詞</p>
+  </div>
+
+  <!-- 新增提示詞區塊 -->
+  <div class="add-section">
+    <h3>➕ 新增提示詞</h3>
+
+    <div class="form-group">
+      <label for="newPromptTitle">標題 *</label>
+      <input type="text" id="newPromptTitle" placeholder="例如：繁體中文回答、程式碼檢查...">
+    </div>
+
+    <div class="form-group">
+      <label for="newPromptCategory">分類</label>
+      <input type="text" id="newPromptCategory" list="categoryDatalist" placeholder="例如：工作、學習、程式設計...（選填）">
+      <datalist id="categoryDatalist"></datalist>
+    </div>
+
+    <div class="form-group">
+      <label for="newPromptContent">內容 *</label>
+      <textarea id="newPromptContent" placeholder="輸入你的提示詞內容..."></textarea>
+    </div>
+
+    <button id="addPromptBtn">儲存提示詞</button>
+  </div>
+
+  <!-- 提示詞列表 -->
+  <div class="prompts-section">
+    <div class="prompts-section-header">
+      <h3>📝 已儲存的提示詞</h3>
+    </div>
+
+    <!-- 搜尋和篩選 -->
+    <div class="filter-section">
+      <input type="text" id="searchInput" placeholder="🔍 搜尋標題或內容...">
+      <select id="categoryFilter">
+        <option value="">🏷️ 所有分類</option>
+      </select>
+    </div>
+
+    <div id="promptList"></div>
+  </div>
+
+  <!-- 匯出匯入功能 -->
+  <div class="import-export-section">
+    <h3>💾 備份與還原</h3>
+    <div class="btn-group">
+      <button class="export-btn" id="exportBtn">📤 匯出</button>
+      <button class="import-btn" id="importBtn">📥 匯入</button>
+    </div>
+    <input type="file" id="importFileInput" accept=".json">
+  </div>
+
+  <div class="footer">
+    v2.0.0 | 支援標題、分類和搜尋功能
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
