@@ -1,0 +1,86 @@
+doctype html
+html(lang="zh-TW")
+	head
+		meta(charset="UTF-8")
+		meta(name="viewport", content="width=device-width, initial-scale=1.0")
+		title 76DollShop 內部公告系統
+		link(rel="stylesheet", href="/css/style.css")
+	body
+		header.header
+			.container
+				h1 🏪 76DollShop 內部公告與學習系統
+				.user-info
+					span 歡迎，#{userEmail}
+					a.btn.btn-secondary(href="/logout") 登出
+
+		main.container
+			section.create-section
+				h2 📝 發布新公告
+				form#create-form
+					.form-group
+						label(for="posterName") 發布者姓名
+						input#posterName(type="text", required, placeholder="請輸入您的姓名")
+
+					.form-group
+						label(for="title") 標題
+						input#title(type="text", required, placeholder="公告標題")
+
+					.form-group
+						label(for="content") 內容
+						textarea#content(required, placeholder="公告內容...", rows="6")
+
+					.form-group
+						label(for="categories") 分類標籤（可多選）
+						#category-checkboxes.category-checkboxes
+							// 動態生成的分類選項
+
+					.form-group
+						label(for="custom-category") 自訂分類（選填）
+						.custom-category-input
+							input#custom-category(type="text", placeholder="輸入自訂分類標籤...")
+							button#add-category-btn.btn.btn-secondary(type="button") ➕ 加入為預設選項
+
+					button.btn.btn-primary(type="submit") 發布公告
+
+			section.filter-section
+				h2 🔍 篩選與搜尋
+				.filters
+					.filter-group
+						label(for="category-filter") 分類篩選
+						select#category-filter
+							option(value="") 全部分類
+							option(value="新品資訊") 新品資訊
+							option(value="行政通知") 行政通知
+							option(value="維護保養") 維護保養
+							option(value="學習教材") 學習教材
+							option(value="其他") 其他
+
+					.filter-group
+						label(for="search-input") 關鍵字搜尋
+						input#search-input(type="text", placeholder="搜尋標題或內容...")
+
+					button.btn.btn-secondary#search-btn 搜尋
+
+			section.announcements-section
+				h2 📢 公告列表
+				#announcements-list.announcements-grid
+					p.loading 載入中...
+
+		#announcement-detail-modal.modal
+			.modal-content
+				.modal-header
+					h2#detail-modal-title
+					button.close-detail-modal &times;
+				.modal-body
+					#announcement-detail-content
+
+		#quiz-modal.modal
+			.modal-content
+				.modal-header
+					h2 📝 學習測驗
+					button.close-modal &times;
+				.modal-body
+					#quiz-container
+					#quiz-result.hidden
+
+		script(src="/js/app.js")
