@@ -1,0 +1,13 @@
+{
+	"name": "76dollshop-announcement-system",
+	"description": "76DollShop 內部公告與學習系統",
+	"copyright": "Copyright © 2025, 76DollShop",
+	"authors": ["76DollShop Team"],
+	"dependencies": {
+		"vibe-d": "~>0.9.7"
+	},
+	"versions": ["VibeDefaultMain"],
+	"subConfigurations": {
+		"vibe-d:tls": "notls"
+	}
+}

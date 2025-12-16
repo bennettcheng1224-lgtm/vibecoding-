@@ -1,0 +1,25 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/76dollshop-announcement-system
+*.o
+*.obj
+*.lst
+*.exe
+*.pdb
+
+# Environment files
+.env
+service-account-key.json
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
