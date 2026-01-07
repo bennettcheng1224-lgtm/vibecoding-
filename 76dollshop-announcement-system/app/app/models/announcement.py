@@ -139,5 +139,6 @@ class AllowedEmail(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     email = Column(String(255), unique=True, nullable=False)
+    employee_name = Column(String(200), nullable=True)  # 員工姓名備註
     added_by = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

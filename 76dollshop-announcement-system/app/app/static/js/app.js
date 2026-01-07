@@ -379,6 +379,9 @@ function createAnnouncementCard(announcement) {
             <button class="btn btn-primary btn-quiz" data-id="${announcement.id}">
                 📝 開始學習測驗
             </button>
+            <button class="btn btn-secondary btn-copy-link" data-id="${announcement.id}" title="複製公告連結">
+                🔗 複製連結
+            </button>
             ${deleteButton}
         </div>
         <div class="card-comments" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
@@ -405,6 +408,13 @@ function createAnnouncementCard(announcement) {
     quizBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         handleStartQuiz(announcement);
+    });
+
+    // 綁定複製連結按鈕
+    const copyLinkBtn = card.querySelector('.btn-copy-link');
+    copyLinkBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleCopyAnnouncementLink(announcement.id);
     });
 
     // 綁定刪除公告按鈕
@@ -1035,3 +1045,48 @@ function renderComments(comments, announcementId) {
         `;
     }).join('');
 }
+
+// 複製公告連結
+function handleCopyAnnouncementLink(announcementId) {
+    // 產生公告的完整 URL (包含 hash 定位)
+    const baseUrl = window.location.origin;
+    const announcementUrl = `${baseUrl}/#announcement-${announcementId}`;
+
+    // 使用 Clipboard API 複製到剪貼簿
+    navigator.clipboard.writeText(announcementUrl).then(() => {
+        alert('✅ 公告連結已複製到剪貼簿!\n\n' + announcementUrl);
+    }).catch(err => {
+        // 如果 Clipboard API 失敗,使用舊方法
+        const textArea = document.createElement('textarea');
+        textArea.value = announcementUrl;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert('✅ 公告連結已複製到剪貼簿!\n\n' + announcementUrl);
+        } catch (err) {
+            alert('❌ 複製失敗,請手動複製:\n' + announcementUrl);
+        }
+        document.body.removeChild(textArea);
+    });
+}
+
+// 處理頁面載入時的 hash 定位
+window.addEventListener('DOMContentLoaded', () => {
+    // 如果 URL 包含 #announcement-xxx, 自動滾動到對應公告
+    if (window.location.hash.startsWith('#announcement-')) {
+        setTimeout(() => {
+            const announcementId = window.location.hash.replace('#announcement-', '');
+            const card = document.getElementById(`announcement-${announcementId}`);
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                card.style.boxShadow = '0 0 20px rgba(37, 99, 235, 0.5)';
+                setTimeout(() => {
+                    card.style.boxShadow = '';
+                }, 2000);
+            }
+        }, 500);
+    }
+});

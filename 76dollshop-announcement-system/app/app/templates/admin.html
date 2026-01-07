@@ -132,7 +132,8 @@
             <div class="admin-section">
                 <h2>📧 Email 白名單管理</h2>
                 <div class="add-email-form">
-                    <input type="email" id="new-email-input" placeholder="輸入 Email 地址" required>
+                    <input type="email" id="new-email-input" placeholder="輸入 Email 地址" required style="flex: 2;">
+                    <input type="text" id="new-employee-name-input" placeholder="員工姓名（選填）" style="flex: 1;">
                     <button class="btn btn-primary" id="add-email-btn">➕ 新增</button>
                 </div>
                 <ul id="email-list" class="email-list">
@@ -214,6 +215,7 @@
                 <li class="email-item">
                     <div>
                         <strong>${escapeHtml(email.email)}</strong>
+                        ${email.employee_name ? `<span style="color: #2563eb; margin-left: 10px;">👤 ${escapeHtml(email.employee_name)}</span>` : ''}
                         <small style="color: #64748b; display: block;">
                             新增者：${escapeHtml(email.added_by)} |
                             ${new Date(email.created_at).toLocaleString('zh-TW')}
@@ -226,8 +228,10 @@
 
         // 新增 Email
         document.getElementById('add-email-btn').addEventListener('click', async () => {
-            const input = document.getElementById('new-email-input');
-            const email = input.value.trim();
+            const emailInput = document.getElementById('new-email-input');
+            const nameInput = document.getElementById('new-employee-name-input');
+            const email = emailInput.value.trim();
+            const employee_name = nameInput.value.trim() || null;
 
             if (!email) {
                 alert('請輸入 Email');
@@ -238,14 +242,15 @@
                 const response = await fetch('/admin/api/allowed-emails', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email})
+                    body: JSON.stringify({email, employee_name})
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
                     alert(`✅ Email ${email} 已新增`);
-                    input.value = '';
+                    emailInput.value = '';
+                    nameInput.value = '';
                     // 重新載入列表
                     const emailsResponse = await fetch('/admin/api/allowed-emails');
                     const emailsData = await emailsResponse.json();
