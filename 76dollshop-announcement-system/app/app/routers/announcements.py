@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
 from app.models import Announcement, Category, ReadStatus, QuizScore, Comment
-from app.auth import get_current_user, is_admin
+from app.auth import get_current_user, is_admin, get_user_display_name
 from app.utils.google_sheets import google_sheets_service
 from pydantic import BaseModel
 from datetime import datetime
@@ -26,13 +26,11 @@ class MarkAsReadRequest(BaseModel):
 class QuizSubmit(BaseModel):
     score: int
     total: int
-    userName: str
     passed: bool
 
 
 class CommentCreate(BaseModel):
     content: str
-    userName: str
 
 
 @router.get("")
@@ -203,19 +201,20 @@ async def submit_quiz(
     ).first()
 
     percentage = round((quiz_data.score / quiz_data.total) * 100)
+    user_display_name = get_user_display_name(current_user)
 
     if existing_score:
         existing_score.score = quiz_data.score
         existing_score.total = quiz_data.total
         existing_score.percentage = percentage
-        existing_score.user_name = quiz_data.userName
+        existing_score.user_name = user_display_name
         existing_score.passed = quiz_data.passed
         existing_score.created_at = datetime.utcnow()
     else:
         quiz_score = QuizScore(
             announcement_id=announcement_id,
             user_email=current_user,
-            user_name=quiz_data.userName,
+            user_name=user_display_name,
             score=quiz_data.score,
             total=quiz_data.total,
             percentage=percentage,
@@ -247,10 +246,12 @@ async def add_comment(
     if not announcement:
         raise HTTPException(status_code=404, detail="Announcement not found")
 
+    user_display_name = get_user_display_name(current_user)
+
     comment = Comment(
         announcement_id=announcement_id,
         user_email=current_user,
-        user_name=comment_data.userName,
+        user_name=user_display_name,
         content=comment_data.content
     )
     db.add(comment)

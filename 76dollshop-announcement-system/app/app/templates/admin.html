@@ -96,6 +96,44 @@
             border-radius: 4px;
             margin-bottom: 10px;
         }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #334155;
+        }
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            resize: vertical;
+            font-family: inherit;
+        }
+        .category-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .category-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .custom-category-input {
+            display: flex;
+            gap: 10px;
+        }
+        .custom-category-input input {
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -112,13 +150,54 @@
 
     <div class="admin-container">
         <div class="admin-tabs">
-            <button class="admin-tab active" data-tab="announcements">公告管理</button>
+            <button class="admin-tab active" data-tab="create">發布新公告</button>
+            <button class="admin-tab" data-tab="announcements">公告管理</button>
             <button class="admin-tab" data-tab="categories">分類管理</button>
             <button class="admin-tab" data-tab="emails">Email 白名單</button>
         </div>
 
+        <!-- 發布新公告 Tab -->
+        <div id="create-tab" class="tab-content active">
+            <div class="admin-section">
+                <h2>📝 發布新公告</h2>
+                <form id="create-form">
+                    <div class="form-group">
+                        <label for="posterName">發布者姓名</label>
+                        <input id="posterName" type="text" required placeholder="請輸入您的姓名">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="title">標題</label>
+                        <input id="title" type="text" required placeholder="公告標題">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="content">內容</label>
+                        <textarea id="content" required placeholder="公告內容..." rows="6"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="categories">分類標籤（可多選）</label>
+                        <div id="category-checkboxes" class="category-checkboxes">
+                            <!-- 動態生成的分類選項 -->
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="custom-category">自訂分類（選填）</label>
+                        <div class="custom-category-input">
+                            <input id="custom-category" type="text" placeholder="輸入自訂分類標籤...">
+                            <button id="add-custom-category-btn" class="btn btn-secondary" type="button">➕ 加入為預設選項</button>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" type="submit">發布公告</button>
+                </form>
+            </div>
+        </div>
+
         <!-- 公告管理 Tab -->
-        <div id="announcements-tab" class="tab-content active">
+        <div id="announcements-tab" class="tab-content">
             <div class="admin-section">
                 <h2>📢 公告管理</h2>
                 <p>點擊公告進行編輯或刪除</p>
@@ -471,6 +550,108 @@
             }
         }
 
+        // 載入所有分類（用於建立公告表單）
+        async function loadCategoriesForForm() {
+            try {
+                const response = await fetch('/admin/api/categories');
+                const data = await response.json();
+                const container = document.getElementById('category-checkboxes');
+
+                container.innerHTML = data.categories.map(cat => `
+                    <label class="category-checkbox">
+                        <input type="checkbox" name="category" value="${escapeHtml(cat.name)}">
+                        ${escapeHtml(cat.name)}
+                    </label>
+                `).join('');
+            } catch (error) {
+                console.error('載入分類失敗：', error);
+            }
+        }
+
+        // 處理發布新公告表單
+        document.getElementById('create-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const posterName = document.getElementById('posterName').value.trim();
+            const title = document.getElementById('title').value.trim();
+            const content = document.getElementById('content').value.trim();
+
+            // 收集選中的分類
+            const selectedCategories = Array.from(document.querySelectorAll('input[name="category"]:checked'))
+                .map(checkbox => checkbox.value);
+
+            // 加入自訂分類（如果有填寫）
+            const customCategory = document.getElementById('custom-category').value.trim();
+            if (customCategory && !selectedCategories.includes(customCategory)) {
+                selectedCategories.push(customCategory);
+            }
+
+            if (!posterName || !title || !content) {
+                alert('請填寫所有必填欄位');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/announcements', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        posterName,
+                        title,
+                        content,
+                        categories: selectedCategories
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('✅ 公告已發布！');
+                    // 清空表單
+                    document.getElementById('create-form').reset();
+                    // 重新載入分類選項
+                    loadCategoriesForForm();
+                    // 重新載入公告列表
+                    location.reload();
+                } else {
+                    alert('❌ 發布失敗');
+                }
+            } catch (error) {
+                alert('❌ 發布失敗：' + error.message);
+            }
+        });
+
+        // 加入自訂分類到資料庫
+        document.getElementById('add-custom-category-btn').addEventListener('click', async () => {
+            const input = document.getElementById('custom-category');
+            const name = input.value.trim();
+
+            if (!name) {
+                alert('請輸入分類名稱');
+                return;
+            }
+
+            try {
+                const response = await fetch('/admin/api/categories', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`✅ 分類「${name}」已加入預設選項`);
+                    input.value = '';
+                    loadCategoriesForForm();
+                } else {
+                    alert('❌ ' + (data.detail || '新增失敗'));
+                }
+            } catch (error) {
+                alert('❌ 新增失敗：' + error.message);
+            }
+        });
+
         // Tab 切換時載入對應資料
         document.querySelectorAll('.admin-tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -479,6 +660,8 @@
                     loadCategories();
                 } else if (tabName === 'emails') {
                     loadEmails();
+                } else if (tabName === 'create') {
+                    loadCategoriesForForm();
                 }
             });
         });
@@ -486,6 +669,7 @@
         // 初始化
         loadAnnouncements();
         loadEmails();
+        loadCategoriesForForm();
     </script>
 </body>
 </html>

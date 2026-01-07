@@ -67,10 +67,6 @@ function initializeApp() {
         console.log('Is Admin:', isAdmin);
     }
 
-    // 載入分類選項
-    loadCategories();
-    renderCategoryOptions();
-
     // 載入公告
     loadAnnouncements();
 
@@ -83,18 +79,6 @@ function initializeApp() {
 // ============================================================================
 
 function bindEventListeners() {
-    // 發布公告表單
-    const createForm = document.getElementById('create-form');
-    if (createForm) {
-        createForm.addEventListener('submit', handleCreateAnnouncement);
-    }
-
-    // 加入預設分類按鈕
-    const addCategoryBtn = document.getElementById('add-category-btn');
-    if (addCategoryBtn) {
-        addCategoryBtn.addEventListener('click', handleAddCategory);
-    }
-
     // 搜尋按鈕
     const searchBtn = document.getElementById('search-btn');
     if (searchBtn) {
@@ -766,7 +750,6 @@ async function handleSubmitQuiz() {
             body: JSON.stringify({
                 score,
                 total,
-                userName: currentUserName,
                 passed
             })
         });
@@ -951,12 +934,6 @@ function showError(message) {
 // ============================================================================
 
 async function addComment(announcementId) {
-    const userName = prompt('請輸入您的姓名：');
-    if (!userName || !userName.trim()) {
-        showError('需要輸入姓名');
-        return;
-    }
-
     const content = prompt('請輸入留言內容：');
     if (!content || !content.trim()) {
         showError('留言內容不能為空');
@@ -968,7 +945,6 @@ async function addComment(announcementId) {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                userName: userName.trim(),
                 content: content.trim()
             })
         });

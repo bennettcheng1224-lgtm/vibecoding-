@@ -65,6 +65,23 @@ def is_admin(user_email: str) -> bool:
     return user_email == "bennettcheng1224@gmail.com"
 
 
+def get_user_display_name(user_email: str) -> str:
+    """Get user display name from allowed_emails table (employee_name) or fallback to email"""
+    try:
+        from app.models import AllowedEmail
+        db = SessionLocal()
+        allowed_email = db.query(AllowedEmail).filter(AllowedEmail.email == user_email).first()
+        db.close()
+
+        if allowed_email and allowed_email.employee_name:
+            return allowed_email.employee_name
+    except Exception as e:
+        print(f"Error getting user display name: {e}")
+
+    # Fallback to email
+    return user_email
+
+
 async def exchange_code_for_token(code: str) -> dict:
     """Exchange OAuth code for user information"""
     token_url = "https://oauth2.googleapis.com/token"

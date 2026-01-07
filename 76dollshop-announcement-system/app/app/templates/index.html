@@ -21,45 +21,6 @@
     </header>
 
     <main class="container">
-        {% if is_admin %}
-        <section class="create-section">
-            <h2>📝 發布新公告</h2>
-            <form id="create-form">
-                <div class="form-group">
-                    <label for="posterName">發布者姓名</label>
-                    <input id="posterName" type="text" required placeholder="請輸入您的姓名">
-                </div>
-
-                <div class="form-group">
-                    <label for="title">標題</label>
-                    <input id="title" type="text" required placeholder="公告標題">
-                </div>
-
-                <div class="form-group">
-                    <label for="content">內容</label>
-                    <textarea id="content" required placeholder="公告內容..." rows="6"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="categories">分類標籤（可多選）</label>
-                    <div id="category-checkboxes" class="category-checkboxes">
-                        <!-- 動態生成的分類選項 -->
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="custom-category">自訂分類（選填）</label>
-                    <div class="custom-category-input">
-                        <input id="custom-category" type="text" placeholder="輸入自訂分類標籤...">
-                        <button id="add-category-btn" class="btn btn-secondary" type="button">➕ 加入為預設選項</button>
-                    </div>
-                </div>
-
-                <button class="btn btn-primary" type="submit">發布公告</button>
-            </form>
-        </section>
-        {% endif %}
-
         <section class="filter-section">
             <h2>🔍 篩選與搜尋</h2>
             <div class="filters">
