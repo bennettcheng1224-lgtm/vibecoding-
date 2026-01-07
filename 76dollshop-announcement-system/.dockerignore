@@ -1,0 +1,8 @@
+.dub
+.git
+.gitignore
+.env
+*.md
+demo.html
+76dollshop-announcement-system
+.DS_Store

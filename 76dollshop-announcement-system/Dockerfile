@@ -1,33 +1,30 @@
-# 使用官方 D 語言映像檔
-FROM dlang2/ldc-ubuntu:latest
+# Python FastAPI Application Dockerfile
+FROM python:3.11-slim
 
-# 安裝必要套件
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    git \
-    libssl-dev \
-    pkg-config \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 安裝 Python 依賴
-RUN pip3 install --no-cache-dir \
-    google-auth \
-    google-auth-oauthlib \
-    google-auth-httplib2 \
-    google-api-python-client
+# Install uv (fast Python package manager)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
 
-# 設定工作目錄
+# Set working directory
 WORKDIR /app
 
-# 複製專案檔案
-COPY . .
+# Copy project files
+COPY app/ /app/
 
-# 編譯專案
-RUN dub build --build=release
+# Install Python dependencies using uv
+RUN uv pip install --system -r requirements.txt
 
-# 暴露端口
+# Expose port
 EXPOSE 8080
 
-# 啟動應用
-CMD ["./76dollshop-announcement-system"]
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Run the application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

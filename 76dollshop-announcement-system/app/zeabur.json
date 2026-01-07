@@ -1,0 +1,14 @@
+{
+  "name": "76dollshop-announcement-system",
+  "services": [
+    {
+      "name": "web",
+      "type": "python",
+      "buildCommand": "pip install uv && uv sync",
+      "startCommand": "PYTHONPATH=. uv run uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}",
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  ]
+}

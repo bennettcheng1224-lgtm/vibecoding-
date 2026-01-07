@@ -9,8 +9,29 @@ docs/
 *.exe
 *.pdb
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+app/.venv/
+app/venv/
+app/ENV/
+app/env/
+*.egg-info/
+dist/
+build/
+
+# Database
+app/*.db
+app/*.db-journal
+*.sqlite
+*.sqlite3
+
 # Environment files
 .env
+.env.local
 service-account-key.json
 
 # IDE files
@@ -23,3 +44,9 @@ service-account-key.json
 # OS files
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+
+# uv
+.uv/

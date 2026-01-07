@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>76DollShop 管理後台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .admin-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .admin-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .admin-tab.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .email-list, .announcement-list {
+            list-style: none;
+            padding: 0;
+        }
+        .email-item, .announcement-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .email-item:hover, .announcement-item:hover {
+            background: #f8fafc;
+        }
+        .add-email-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .add-email-form input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+        }
+        .edit-form {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 4px;
+        }
+        .edit-form.active {
+            display: block;
+        }
+        .edit-form textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .edit-form input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>🔧 76DollShop 管理後台</h1>
+            <div class="user-info">
+                <span>管理員：{{ user_email }}</span>
+                <a class="btn btn-secondary" href="/">返回首頁</a>
+                <a class="btn btn-secondary" href="/logout">登出</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="admin-container">
+        <div class="admin-tabs">
+            <button class="admin-tab active" data-tab="announcements">公告管理</button>
+            <button class="admin-tab" data-tab="emails">Email 白名單</button>
+        </div>
+
+        <!-- 公告管理 Tab -->
+        <div id="announcements-tab" class="tab-content active">
+            <div class="admin-section">
+                <h2>📢 公告管理</h2>
+                <p>點擊公告進行編輯或刪除</p>
+                <ul id="admin-announcements-list" class="announcement-list">
+                    <!-- 動態載入 -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Email 白名單 Tab -->
+        <div id="emails-tab" class="tab-content">
+            <div class="admin-section">
+                <h2>📧 Email 白名單管理</h2>
+                <div class="add-email-form">
+                    <input type="email" id="new-email-input" placeholder="輸入 Email 地址" required>
+                    <button class="btn btn-primary" id="add-email-btn">➕ 新增</button>
+                </div>
+                <ul id="email-list" class="email-list">
+                    <!-- 動態載入 -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Announcement Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>編輯公告</h2>
+                <button class="close-modal" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>標題</label>
+                    <input type="text" id="edit-title" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>內容</label>
+                    <textarea id="edit-content" rows="10"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>分類（用逗號分隔）</label>
+                    <input type="text" id="edit-categories" placeholder="例如: 新品資訊,行政通知">
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+                    <button class="btn btn-danger" onclick="deleteCurrentAnnouncement()">刪除公告</button>
+                    <button class="btn btn-primary" onclick="saveAnnouncement()">儲存變更</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentEditId = null;
+        let allAnnouncements = {{ announcements | tojson }};
+        let allEmails = {{ allowed_emails | tojson }};
+
+        // Tab 切換
+        document.querySelectorAll('.admin-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+            });
+        });
+
+        // 載入公告列表
+        function loadAnnouncements() {
+            const list = document.getElementById('admin-announcements-list');
+            list.innerHTML = allAnnouncements.map(ann => `
+                <li class="announcement-item">
+                    <div>
+                        <strong>${escapeHtml(ann.title)}</strong>
+                        <p style="color: #64748b; font-size: 14px; margin: 5px 0 0 0;">
+                            ${escapeHtml(ann.content.substring(0, 100))}${ann.content.length > 100 ? '...' : ''}
+                        </p>
+                        <small style="color: #94a3b8;">${new Date(ann.date).toLocaleString('zh-TW')}</small>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="editAnnouncement('${ann.id}')">編輯</button>
+                        <button class="btn btn-danger" onclick="deleteAnnouncementDirect('${ann.id}', '${escapeHtml(ann.title).replace(/'/g, "\\'")}')">刪除</button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // 載入 Email 列表
+        function loadEmails() {
+            const list = document.getElementById('email-list');
+            list.innerHTML = allEmails.map(email => `
+                <li class="email-item">
+                    <div>
+                        <strong>${escapeHtml(email.email)}</strong>
+                        <small style="color: #64748b; display: block;">
+                            新增者：${escapeHtml(email.added_by)} |
+                            ${new Date(email.created_at).toLocaleString('zh-TW')}
+                        </small>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteEmail(${email.id}, '${escapeHtml(email.email)}')">刪除</button>
+                </li>
+            `).join('');
+        }
+
+        // 新增 Email
+        document.getElementById('add-email-btn').addEventListener('click', async () => {
+            const input = document.getElementById('new-email-input');
+            const email = input.value.trim();
+
+            if (!email) {
+                alert('請輸入 Email');
+                return;
+            }
+
+            try {
+                const response = await fetch('/admin/api/allowed-emails', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`✅ Email ${email} 已新增`);
+                    input.value = '';
+                    // 重新載入列表
+                    const emailsResponse = await fetch('/admin/api/allowed-emails');
+                    const emailsData = await emailsResponse.json();
+                    allEmails = emailsData.emails;
+                    loadEmails();
+                } else {
+                    alert('❌ ' + (data.detail || '新增失敗'));
+                }
+            } catch (error) {
+                alert('❌ 新增失敗：' + error.message);
+            }
+        });
+
+        // 刪除 Email
+        async function deleteEmail(id, email) {
+            if (!confirm(`確定要刪除 Email ${email} 嗎？`)) return;
+
+            try {
+                const response = await fetch(`/admin/api/allowed-emails/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`✅ Email ${email} 已刪除`);
+                    // 重新載入列表
+                    const emailsResponse = await fetch('/admin/api/allowed-emails');
+                    const emailsData = await emailsResponse.json();
+                    allEmails = emailsData.emails;
+                    loadEmails();
+                } else {
+                    alert('❌ ' + (data.detail || '刪除失敗'));
+                }
+            } catch (error) {
+                alert('❌ 刪除失敗：' + error.message);
+            }
+        }
+
+        // 編輯公告
+        async function editAnnouncement(id) {
+            currentEditId = id;
+            const ann = allAnnouncements.find(a => a.id === id);
+
+            document.getElementById('edit-title').value = ann.title;
+            document.getElementById('edit-content').value = ann.content;
+            document.getElementById('edit-categories').value = ann.categories.join(', ');
+
+            document.getElementById('edit-modal').classList.add('active');
+        }
+
+        // 儲存公告
+        async function saveAnnouncement() {
+            const title = document.getElementById('edit-title').value.trim();
+            const content = document.getElementById('edit-content').value.trim();
+            const categoriesStr = document.getElementById('edit-categories').value.trim();
+            const categories = categoriesStr.split(',').map(c => c.trim()).filter(c => c);
+
+            if (!title || !content) {
+                alert('標題和內容不能為空');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/admin/api/announcements/${currentEditId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({title, content, categories})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('✅ 公告已更新');
+                    closeEditModal();
+                    location.reload();
+                } else {
+                    alert('❌ 更新失敗');
+                }
+            } catch (error) {
+                alert('❌ 更新失敗：' + error.message);
+            }
+        }
+
+        // 刪除公告
+        async function deleteCurrentAnnouncement() {
+            const ann = allAnnouncements.find(a => a.id === currentEditId);
+            await deleteAnnouncementDirect(currentEditId, ann.title);
+        }
+
+        async function deleteAnnouncementDirect(id, title) {
+            if (!confirm(`確定要刪除公告「${title}」嗎？此操作無法復原！`)) return;
+
+            try {
+                const response = await fetch(`/api/announcements/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('✅ 公告已刪除');
+                    location.reload();
+                } else {
+                    alert('❌ 刪除失敗');
+                }
+            } catch (error) {
+                alert('❌ 刪除失敗：' + error.message);
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.remove('active');
+            currentEditId = null;
+        }
+
+        function escapeHtml(text) {
+            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // 初始化
+        loadAnnouncements();
+        loadEmails();
+    </script>
+</body>
+</html>

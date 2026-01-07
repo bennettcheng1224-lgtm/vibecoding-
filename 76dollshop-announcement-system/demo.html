@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>76DollShop 內部公告系統 - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow);
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .section {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            margin-bottom: 1.5rem;
+        }
+
+        .announcements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .announcement-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .announcement-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-meta {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .card-content {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .category-tag {
+            display: inline-block;
+            padding: 0.25rem 0.625rem;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .card-actions .btn {
+            font-size: 0.75rem;
+            padding: 0.375rem 0.75rem;
+        }
+
+        .demo-notice {
+            background-color: #fef3c7;
+            border: 2px solid #f59e0b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .demo-notice strong {
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>🏪 76DollShop 內部公告與學習系統</h1>
+            <div class="user-info">
+                <span>歡迎，demo@76dollshop.com</span>
+                <a class="btn btn-secondary" href="#">登出</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="demo-notice">
+            <strong>⚠️ 這是靜態 Demo 頁面</strong><br>
+            實際系統需要執行 <code>./start.sh</code> 或 <code>dub run</code> 啟動伺服器
+        </div>
+
+        <section class="section">
+            <h2>📢 公告列表</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                以下是系統介面預覽，實際資料將從 Google Sheets 讀取
+            </p>
+
+            <div class="announcements-grid">
+                <!-- 範例公告卡片 1 -->
+                <div class="announcement-card">
+                    <div class="card-header">
+                        <h3 class="card-title">新品上架通知：冬季限定商品</h3>
+                        <div class="card-meta">
+                            <span>📅 2025-12-15</span>
+                            <span>✍️ 王小明</span>
+                            <span>👁️ 12 人已讀</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        各位同仁好！本週將上架冬季限定商品系列，包含毛絨娃娃、聖誕主題裝飾等。請熟悉商品特色以便向顧客介紹...
+                    </div>
+                    <div class="card-footer">
+                        <span class="category-tag">新品資訊</span>
+                        <span class="category-tag">學習教材</span>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-success">✅ 我已閱讀並理解</button>
+                        <button class="btn btn-primary">📝 開始學習測驗</button>
+                    </div>
+                </div>
+
+                <!-- 範例公告卡片 2 -->
+                <div class="announcement-card">
+                    <div class="card-header">
+                        <h3 class="card-title">店內設備維護通知</h3>
+                        <div class="card-meta">
+                            <span>📅 2025-12-14</span>
+                            <span>✍️ 李經理</span>
+                            <span>👁️ 8 人已讀</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        本週六將進行店內空調系統例行保養，預計早上 8:00-10:00 進行。保養期間請注意...
+                    </div>
+                    <div class="card-footer">
+                        <span class="category-tag">維護保養</span>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-success">✅ 我已閱讀並理解</button>
+                        <button class="btn btn-primary">📝 開始學習測驗</button>
+                    </div>
+                </div>
+
+                <!-- 範例公告卡片 3 -->
+                <div class="announcement-card">
+                    <div class="card-header">
+                        <h3 class="card-title">年終聚餐活動通知</h3>
+                        <div class="card-meta">
+                            <span>📅 2025-12-13</span>
+                            <span>✍️ 人事部</span>
+                            <span>👁️ 15 人已讀</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        感謝大家一年來的辛勞！公司將於 12/25 舉辦年終聚餐，地點在市中心海鮮餐廳...
+                    </div>
+                    <div class="card-footer">
+                        <span class="category-tag">行政通知</span>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-success">✅ 我已閱讀並理解</button>
+                        <button class="btn btn-primary">📝 開始學習測驗</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" style="text-align: center;">
+            <h2>🚀 如何啟動系統</h2>
+            <p style="margin: 1rem 0;">請依照以下步驟啟動完整的系統：</p>
+            <ol style="text-align: left; max-width: 600px; margin: 0 auto; line-height: 2;">
+                <li>閱讀 <strong>SETUP_GUIDE.md</strong> 設定 Google OAuth、Sheets 和 OpenAI API</li>
+                <li>複製 <code>.env.example</code> 為 <code>.env</code> 並填入真實資料</li>
+                <li>執行 <code>./start.sh</code> 啟動伺服器</li>
+                <li>開啟瀏覽器訪問 <code>http://localhost:8080</code></li>
+                <li>使用 Google 帳號登入即可開始使用</li>
+            </ol>
+            <div style="margin-top: 2rem;">
+                <a class="btn btn-primary" href="SETUP_GUIDE.md">📖 查看安裝指南</a>
+                <a class="btn btn-secondary" href="PROJECT_SUMMARY.md" style="margin-left: 1rem;">📋 查看專案摘要</a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
