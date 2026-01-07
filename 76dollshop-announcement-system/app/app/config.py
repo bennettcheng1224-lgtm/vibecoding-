@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     # Google OAuth
     google_client_id: str = ""
     google_client_secret: str = ""
-    google_redirect_uri: str = "http://localhost:8080/auth/callback"
+    google_redirect_uri: str = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8080/auth/callback")
 
     # Google Sheets
     google_sheets_id: str = ""
