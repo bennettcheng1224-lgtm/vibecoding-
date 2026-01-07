@@ -190,3 +190,91 @@ async def update_announcement(
     db.refresh(announcement)
 
     return {"success": True, "announcement": announcement.to_dict()}
+
+
+# Category Management APIs
+@router.get("/api/categories")
+async def get_categories(
+    current_user: str = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Get all categories with usage count"""
+    from app.models import Category
+    from sqlalchemy import func
+
+    categories = db.query(
+        Category.id,
+        Category.name,
+        func.count(Announcement.id).label('usage_count')
+    ).outerjoin(
+        Category.announcements
+    ).group_by(Category.id, Category.name).all()
+
+    return {
+        "categories": [
+            {
+                "id": cat.id,
+                "name": cat.name,
+                "usage_count": cat.usage_count
+            }
+            for cat in categories
+        ]
+    }
+
+
+class CategoryCreate(BaseModel):
+    name: str
+
+
+@router.post("/api/categories")
+async def create_category(
+    category_data: CategoryCreate,
+    current_user: str = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Create a new category"""
+    from app.models import Category
+
+    # Check if category already exists
+    existing = db.query(Category).filter(Category.name == category_data.name).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Category already exists")
+
+    new_category = Category(name=category_data.name)
+    db.add(new_category)
+    db.commit()
+    db.refresh(new_category)
+
+    return {
+        "success": True,
+        "category": {
+            "id": new_category.id,
+            "name": new_category.name
+        }
+    }
+
+
+@router.delete("/api/categories/{category_id}")
+async def delete_category(
+    category_id: int,
+    current_user: str = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Delete a category"""
+    from app.models import Category
+
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    # Check if category is in use
+    if category.announcements:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot delete category '{category.name}' because it is used by {len(category.announcements)} announcement(s)"
+        )
+
+    db.delete(category)
+    db.commit()
+
+    return {"success": True}

@@ -174,6 +174,13 @@ async def mark_as_read(
         db.add(read_status)
         db.commit()
 
+        # Sync to Google Sheets after marking as read
+        try:
+            db.refresh(announcement)
+            google_sheets_service.sync_announcement_data(announcement.to_dict())
+        except Exception as e:
+            print(f"Failed to sync read status to Google Sheets: {e}")
+
     return {"success": True}
 
 
@@ -217,6 +224,13 @@ async def submit_quiz(
         db.add(quiz_score)
 
     db.commit()
+
+    # Sync to Google Sheets after quiz submission
+    try:
+        db.refresh(announcement)
+        google_sheets_service.sync_announcement_data(announcement.to_dict())
+    except Exception as e:
+        print(f"Failed to sync quiz score to Google Sheets: {e}")
 
     return {"success": True, "score": quiz_data.score, "total": quiz_data.total}
 

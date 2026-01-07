@@ -113,6 +113,7 @@
     <div class="admin-container">
         <div class="admin-tabs">
             <button class="admin-tab active" data-tab="announcements">公告管理</button>
+            <button class="admin-tab" data-tab="categories">分類管理</button>
             <button class="admin-tab" data-tab="emails">Email 白名單</button>
         </div>
 
@@ -122,6 +123,20 @@
                 <h2>📢 公告管理</h2>
                 <p>點擊公告進行編輯或刪除</p>
                 <ul id="admin-announcements-list" class="announcement-list">
+                    <!-- 動態載入 -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- 分類管理 Tab -->
+        <div id="categories-tab" class="tab-content">
+            <div class="admin-section">
+                <h2>🏷️ 分類管理</h2>
+                <div class="add-email-form">
+                    <input type="text" id="new-category-input" placeholder="輸入分類名稱（例如：新品資訊、行政通知）" style="flex: 3;">
+                    <button class="btn btn-primary" id="add-category-btn">➕ 新增分類</button>
+                </div>
+                <ul id="category-list" class="email-list">
                     <!-- 動態載入 -->
                 </ul>
             </div>
@@ -371,6 +386,102 @@
             const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
             return String(text).replace(/[&<>"']/g, m => map[m]);
         }
+
+        // 載入分類列表
+        async function loadCategories() {
+            try {
+                const response = await fetch('/admin/api/categories');
+                const data = await response.json();
+                const list = document.getElementById('category-list');
+
+                list.innerHTML = data.categories.map(cat => `
+                    <li class="email-item">
+                        <div>
+                            <strong>${escapeHtml(cat.name)}</strong>
+                            <small style="color: #64748b; display: block;">
+                                使用次數：${cat.usage_count} 個公告
+                            </small>
+                        </div>
+                        <button class="btn btn-danger" onclick="deleteCategory(${cat.id}, '${escapeHtml(cat.name)}', ${cat.usage_count})">刪除</button>
+                    </li>
+                `).join('');
+            } catch (error) {
+                console.error('載入分類失敗：', error);
+            }
+        }
+
+        // 新增分類
+        document.getElementById('add-category-btn').addEventListener('click', async () => {
+            const input = document.getElementById('new-category-input');
+            const name = input.value.trim();
+
+            if (!name) {
+                alert('請輸入分類名稱');
+                return;
+            }
+
+            try {
+                const response = await fetch('/admin/api/categories', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`✅ 分類「${name}」已新增`);
+                    input.value = '';
+                    loadCategories();
+                } else {
+                    alert('❌ ' + (data.detail || '新增失敗'));
+                }
+            } catch (error) {
+                alert('❌ 新增失敗：' + error.message);
+            }
+        });
+
+        // 刪除分類
+        async function deleteCategory(id, name, usageCount) {
+            if (usageCount > 0) {
+                if (!confirm(`分類「${name}」目前被 ${usageCount} 個公告使用，\n確定要刪除嗎？刪除後這些公告將失去此分類標籤。`)) {
+                    return;
+                }
+            } else {
+                if (!confirm(`確定要刪除分類「${name}」嗎？`)) {
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch(`/admin/api/categories/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`✅ 分類「${name}」已刪除`);
+                    loadCategories();
+                } else {
+                    alert('❌ ' + (data.detail || '刪除失敗'));
+                }
+            } catch (error) {
+                alert('❌ 刪除失敗：' + error.message);
+            }
+        }
+
+        // Tab 切換時載入對應資料
+        document.querySelectorAll('.admin-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+                if (tabName === 'categories') {
+                    loadCategories();
+                } else if (tabName === 'emails') {
+                    loadEmails();
+                }
+            });
+        });
 
         // 初始化
         loadAnnouncements();
