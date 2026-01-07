@@ -78,6 +78,27 @@
         </div>
     </div>
 
+    <div id="comment-modal" class="modal">
+        <div class="modal-content comment-modal-content">
+            <div class="modal-header">
+                <h2>💬 新增留言</h2>
+                <button class="close-comment-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="comment-form">
+                    <div class="form-group">
+                        <label for="comment-content">留言內容</label>
+                        <textarea id="comment-content" rows="4" placeholder="請輸入您的留言..." required></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="cancel-comment-btn">取消</button>
+                        <button type="submit" class="btn btn-primary">送出留言</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/js/app.js"></script>
 </body>
 </html>

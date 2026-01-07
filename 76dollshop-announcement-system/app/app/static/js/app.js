@@ -933,35 +933,94 @@ function showError(message) {
 // 評論功能
 // ============================================================================
 
-async function addComment(announcementId) {
-    const content = prompt('請輸入留言內容：');
-    if (!content || !content.trim()) {
-        showError('留言內容不能為空');
-        return;
-    }
+let currentCommentAnnouncementId = null;
 
-    try {
-        const response = await fetch(`/api/announcements/${announcementId}/comments`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                content: content.trim()
-            })
-        });
+function openCommentModal(announcementId) {
+    currentCommentAnnouncementId = announcementId;
+    const modal = document.getElementById('comment-modal');
+    const textarea = document.getElementById('comment-content');
 
-        const result = await response.json();
+    // 清空內容
+    textarea.value = '';
 
-        if (result.success) {
-            showSuccess('留言已發送！');
-            loadAnnouncements(); // 重新載入以顯示新留言
-        } else {
-            showError('留言失敗');
-        }
-    } catch (error) {
-        console.error('留言失敗:', error);
-        showError('留言失敗，請稍後再試');
-    }
+    // 顯示 Modal
+    modal.classList.add('active');
+
+    // 自動聚焦到輸入框
+    setTimeout(() => textarea.focus(), 100);
 }
+
+function closeCommentModal() {
+    const modal = document.getElementById('comment-modal');
+    modal.classList.remove('active');
+    currentCommentAnnouncementId = null;
+}
+
+async function addComment(announcementId) {
+    openCommentModal(announcementId);
+}
+
+// 綁定留言表單提交
+document.addEventListener('DOMContentLoaded', function() {
+    const commentForm = document.getElementById('comment-form');
+    const closeBtn = document.querySelector('.close-comment-modal');
+    const cancelBtn = document.getElementById('cancel-comment-btn');
+    const modal = document.getElementById('comment-modal');
+
+    // 表單提交
+    if (commentForm) {
+        commentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const content = document.getElementById('comment-content').value.trim();
+
+            if (!content) {
+                showError('留言內容不能為空');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/announcements/${currentCommentAnnouncementId}/comments`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ content })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccess('留言已發送！');
+                    closeCommentModal();
+                    loadAnnouncements();
+                } else {
+                    showError('留言失敗');
+                }
+            } catch (error) {
+                console.error('留言失敗:', error);
+                showError('留言失敗，請稍後再試');
+            }
+        });
+    }
+
+    // 關閉按鈕
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeCommentModal);
+    }
+
+    // 取消按鈕
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeCommentModal);
+    }
+
+    // 點擊背景關閉
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeCommentModal();
+            }
+        });
+    }
+});
 
 async function deleteComment(commentId) {
     if (!confirm('確定要刪除這則留言嗎？')) {

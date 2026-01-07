@@ -65,7 +65,16 @@ async def admin_dashboard(
             "request": request,
             "user_email": current_user,
             "announcements": [ann.to_dict() for ann in announcements],
-            "allowed_emails": allowed_emails
+            "allowed_emails": [
+                {
+                    "id": email.id,
+                    "email": email.email,
+                    "employee_name": email.employee_name,
+                    "added_by": email.added_by,
+                    "created_at": email.created_at.isoformat()
+                }
+                for email in allowed_emails
+            ]
         }
     )
 
