@@ -101,6 +101,18 @@ function bindEventListeners() {
         categoryFilter.addEventListener('change', handleSearch);
     }
 
+    // 團隊篩選
+    const teamFilter = document.getElementById('team-filter');
+    if (teamFilter) {
+        teamFilter.addEventListener('change', handleSearch);
+    }
+
+    // 已讀/未讀篩選
+    const readStatusFilter = document.getElementById('read-status-filter');
+    if (readStatusFilter) {
+        readStatusFilter.addEventListener('change', handleSearch);
+    }
+
     // 關閉測驗 Modal
     const closeModal = document.querySelector('.close-modal');
     if (closeModal) {
@@ -253,7 +265,7 @@ function updateCategoryFilter() {
 // 載入公告
 // ============================================================================
 
-async function loadAnnouncements(category = '', search = '') {
+async function loadAnnouncements(category = '', search = '', team = '', readStatus = '') {
     try {
         let url = '/api/announcements';
         const params = new URLSearchParams();
@@ -266,7 +278,35 @@ async function loadAnnouncements(category = '', search = '') {
         }
 
         const response = await fetch(url);
-        const announcements = await response.json();
+        let announcements = await response.json();
+
+        // 客戶端篩選：團隊篩選
+        if (team) {
+            announcements = announcements.filter(ann => {
+                // 如果公告沒有設定目標團隊，則顯示給所有人
+                if (!ann.targetTeams || ann.targetTeams.length === 0) {
+                    return true;
+                }
+                // 如果公告有設定目標團隊，檢查是否包含篩選的團隊
+                return ann.targetTeams.includes(team);
+            });
+        }
+
+        // 客戶端篩選：已讀/未讀狀態（僅非管理員）
+        if (readStatus && !isAdmin) {
+            announcements = announcements.filter(ann => {
+                const isRead = ann.readBy && ann.readBy.some(reader =>
+                    reader === currentUserEmail || reader === currentUserName
+                );
+
+                if (readStatus === 'read') {
+                    return isRead;
+                } else if (readStatus === 'unread') {
+                    return !isRead;
+                }
+                return true;
+            });
+        }
 
         currentAnnouncements = announcements;
         renderAnnouncements(announcements);
@@ -311,6 +351,12 @@ function createAnnouncementCard(announcement) {
         return `<span class="category-tag">${escapeHtml(cat)}${deleteIcon}</span>`;
     }).join('');
 
+    // 目標團隊標籤
+    const targetTeamsHtml = (announcement.targetTeams && announcement.targetTeams.length > 0) ?
+        announcement.targetTeams.map(team =>
+            `<span class="team-tag">🏢 ${escapeHtml(team)}</span>`
+        ).join('') : '';
+
     const date = new Date(announcement.date);
     const dateStr = date.toLocaleDateString('zh-TW');
 
@@ -345,6 +391,7 @@ function createAnnouncementCard(announcement) {
         </div>
         <div class="card-footer">
             ${categoriesHtml}
+            ${targetTeamsHtml}
         </div>
         <div class="card-stats">
             <div class="stat-item">
@@ -591,8 +638,10 @@ async function handleMarkAsRead(announcementId) {
 function handleSearch() {
     const category = document.getElementById('category-filter').value;
     const search = document.getElementById('search-input').value.trim();
+    const team = document.getElementById('team-filter') ? document.getElementById('team-filter').value : '';
+    const readStatus = document.getElementById('read-status-filter') ? document.getElementById('read-status-filter').value : '';
 
-    loadAnnouncements(category, search);
+    loadAnnouncements(category, search, team, readStatus);
 }
 
 // ============================================================================

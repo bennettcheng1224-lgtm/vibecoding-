@@ -20,6 +20,7 @@ class Announcement(Base):
     title = Column(String(500), nullable=False)
     content = Column(Text, nullable=False)
     poster_name = Column(String(200), nullable=False)
+    target_teams = Column(Text, nullable=True)  # 以逗號分隔的團隊列表，例如: "業務團隊,行銷團隊"
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Relationships
@@ -52,9 +53,10 @@ class Announcement(Base):
             'posterName': self.poster_name,
             'date': self.created_at.isoformat(),
             'categories': [cat.name for cat in self.categories],
-            'readBy': [rs.user_email for rs in self.read_statuses],
+            'targetTeams': self.target_teams.split(',') if self.target_teams else [],
+            'readBy': [rs.user_name or rs.user_email for rs in self.read_statuses],
             'scores': {
-                score.user_email: {
+                score.user_name or score.user_email: {
                     'score': score.score,
                     'total': score.total,
                     'percentage': score.percentage,
@@ -97,6 +99,7 @@ class ReadStatus(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     announcement_id = Column(String, ForeignKey('announcements.id', ondelete='CASCADE'), nullable=False)
     user_email = Column(String(255), nullable=False)
+    user_name = Column(String(200), nullable=True)  # 員工姓名
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Relationships
@@ -140,5 +143,6 @@ class AllowedEmail(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     email = Column(String(255), unique=True, nullable=False)
     employee_name = Column(String(200), nullable=True)  # 員工姓名備註
+    team = Column(String(100), nullable=True)  # 團隊：業務團隊、行銷團隊、所有團隊等
     added_by = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

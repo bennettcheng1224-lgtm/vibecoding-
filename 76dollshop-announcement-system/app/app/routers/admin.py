@@ -22,6 +22,7 @@ def require_admin(current_user: str = Depends(get_current_user)):
 class AllowedEmailCreate(BaseModel):
     email: str
     employee_name: str = None  # 員工姓名(可選)
+    team: str = None  # 團隊(可選)
 
 
 class AnnouncementUpdate(BaseModel):
@@ -70,6 +71,7 @@ async def admin_dashboard(
                     "id": email.id,
                     "email": email.email,
                     "employee_name": email.employee_name,
+                    "team": email.team,
                     "added_by": email.added_by,
                     "created_at": email.created_at.isoformat()
                 }
@@ -92,6 +94,7 @@ async def get_allowed_emails(
                 "id": email.id,
                 "email": email.email,
                 "employee_name": email.employee_name,
+                "team": email.team,
                 "added_by": email.added_by,
                 "created_at": email.created_at.isoformat()
             }
@@ -116,6 +119,7 @@ async def add_allowed_email(
     new_email = AllowedEmail(
         email=email_data.email,
         employee_name=email_data.employee_name,
+        team=email_data.team,
         added_by=current_user
     )
     db.add(new_email)
@@ -128,6 +132,7 @@ async def add_allowed_email(
             "id": new_email.id,
             "email": new_email.email,
             "employee_name": new_email.employee_name,
+            "team": new_email.team,
             "added_by": new_email.added_by,
             "created_at": new_email.created_at.isoformat()
         }

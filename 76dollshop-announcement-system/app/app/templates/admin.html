@@ -191,6 +191,36 @@
                         </div>
                     </div>
 
+                    <div class="form-group">
+                        <label for="target-teams">目標團隊（可多選，不選則所有人可見）</label>
+                        <div id="target-teams-checkboxes" class="category-checkboxes">
+                            <label class="category-checkbox">
+                                <input type="checkbox" name="target-team" value="業務團隊">
+                                業務團隊
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" name="target-team" value="行銷團隊">
+                                行銷團隊
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" name="target-team" value="技術團隊">
+                                技術團隊
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" name="target-team" value="客服團隊">
+                                客服團隊
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" name="target-team" value="管理團隊">
+                                管理團隊
+                            </label>
+                            <label class="category-checkbox">
+                                <input type="checkbox" name="target-team" value="所有團隊">
+                                所有團隊
+                            </label>
+                        </div>
+                    </div>
+
                     <button class="btn btn-primary" type="submit">發布公告</button>
                 </form>
             </div>
@@ -228,6 +258,15 @@
                 <div class="add-email-form">
                     <input type="email" id="new-email-input" placeholder="輸入 Email 地址" required style="flex: 2;">
                     <input type="text" id="new-employee-name-input" placeholder="員工姓名（選填）" style="flex: 1;">
+                    <select id="new-team-input" style="flex: 1; padding: 10px; border: 1px solid #e2e8f0; border-radius: 4px;">
+                        <option value="">選擇團隊（選填）</option>
+                        <option value="業務團隊">業務團隊</option>
+                        <option value="行銷團隊">行銷團隊</option>
+                        <option value="技術團隊">技術團隊</option>
+                        <option value="客服團隊">客服團隊</option>
+                        <option value="管理團隊">管理團隊</option>
+                        <option value="所有團隊">所有團隊</option>
+                    </select>
                     <button class="btn btn-primary" id="add-email-btn">➕ 新增</button>
                 </div>
                 <ul id="email-list" class="email-list">
@@ -310,6 +349,7 @@
                     <div>
                         <strong>${escapeHtml(email.email)}</strong>
                         ${email.employee_name ? `<span style="color: #2563eb; margin-left: 10px;">👤 ${escapeHtml(email.employee_name)}</span>` : ''}
+                        ${email.team ? `<span style="color: #16a34a; margin-left: 10px;">🏢 ${escapeHtml(email.team)}</span>` : ''}
                         <small style="color: #64748b; display: block;">
                             新增者：${escapeHtml(email.added_by)} |
                             ${new Date(email.created_at).toLocaleString('zh-TW')}
@@ -324,8 +364,10 @@
         document.getElementById('add-email-btn').addEventListener('click', async () => {
             const emailInput = document.getElementById('new-email-input');
             const nameInput = document.getElementById('new-employee-name-input');
+            const teamInput = document.getElementById('new-team-input');
             const email = emailInput.value.trim();
             const employee_name = nameInput.value.trim() || null;
+            const team = teamInput.value.trim() || null;
 
             if (!email) {
                 alert('請輸入 Email');
@@ -336,7 +378,7 @@
                 const response = await fetch('/admin/api/allowed-emails', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email, employee_name})
+                    body: JSON.stringify({email, employee_name, team})
                 });
 
                 const data = await response.json();
@@ -345,6 +387,7 @@
                     alert(`✅ Email ${email} 已新增`);
                     emailInput.value = '';
                     nameInput.value = '';
+                    teamInput.value = '';
                     // 重新載入列表
                     const emailsResponse = await fetch('/admin/api/allowed-emails');
                     const emailsData = await emailsResponse.json();
@@ -586,6 +629,10 @@
                 selectedCategories.push(customCategory);
             }
 
+            // 收集選中的目標團隊
+            const targetTeams = Array.from(document.querySelectorAll('input[name="target-team"]:checked'))
+                .map(checkbox => checkbox.value);
+
             if (!posterName || !title || !content) {
                 alert('請填寫所有必填欄位');
                 return;
@@ -599,7 +646,8 @@
                         posterName,
                         title,
                         content,
-                        categories: selectedCategories
+                        categories: selectedCategories,
+                        targetTeams: targetTeams
                     })
                 });
 

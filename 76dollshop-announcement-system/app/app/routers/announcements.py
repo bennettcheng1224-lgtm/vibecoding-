@@ -17,6 +17,7 @@ class AnnouncementCreate(BaseModel):
     title: str
     content: str
     categories: List[str] = []
+    targetTeams: List[str] = []
 
 
 class MarkAsReadRequest(BaseModel):
@@ -72,6 +73,7 @@ async def create_announcement(
         title=announcement_data.title,
         content=announcement_data.content,
         poster_name=announcement_data.posterName,
+        target_teams=','.join(announcement_data.targetTeams) if announcement_data.targetTeams else None,
         created_at=datetime.utcnow()
     )
 
@@ -165,9 +167,11 @@ async def mark_as_read(
     ).first()
 
     if not existing:
+        user_display_name = get_user_display_name(current_user)
         read_status = ReadStatus(
             announcement_id=announcement_id,
-            user_email=current_user
+            user_email=current_user,
+            user_name=user_display_name
         )
         db.add(read_status)
         db.commit()

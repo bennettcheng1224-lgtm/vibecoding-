@@ -37,6 +37,30 @@
                 </div>
 
                 <div class="filter-group">
+                    <label for="team-filter">團隊篩選</label>
+                    <select id="team-filter">
+                        <option value="">全部團隊</option>
+                        <option value="業務團隊">業務團隊</option>
+                        <option value="行銷團隊">行銷團隊</option>
+                        <option value="技術團隊">技術團隊</option>
+                        <option value="客服團隊">客服團隊</option>
+                        <option value="管理團隊">管理團隊</option>
+                        <option value="所有團隊">所有團隊</option>
+                    </select>
+                </div>
+
+                {% if not is_admin %}
+                <div class="filter-group">
+                    <label for="read-status-filter">閱讀狀態</label>
+                    <select id="read-status-filter">
+                        <option value="">全部</option>
+                        <option value="unread">未讀</option>
+                        <option value="read">已讀</option>
+                    </select>
+                </div>
+                {% endif %}
+
+                <div class="filter-group">
                     <label for="search-input">關鍵字搜尋</label>
                     <input id="search-input" type="text" placeholder="搜尋標題或內容...">
                 </div>
